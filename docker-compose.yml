@@ -1,8 +1,11 @@
 services:
   zigbee2mqtt-health:
-    build: .
+    image: ghcr.io/sheyabernstein/zigbee2mqtt-health:latest
     container_name: zigbee2mqtt-health
     restart: unless-stopped
+    build:
+      context: .
+      dockerfile: Dockerfile
     environment:
       MQTT_BROKER: localhost
       MQTT_PORT: 1883
