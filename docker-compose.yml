@@ -1,0 +1,10 @@
+services:
+  zigbee2mqtt-health:
+    build: .
+    container_name: zigbee2mqtt-health
+    restart: unless-stopped
+    environment:
+      MQTT_BROKER: localhost
+      MQTT_PORT: 1883
+      MQTT_USERNAME: user
+      MQTT_PASSWORD: password

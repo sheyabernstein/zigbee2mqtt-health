@@ -1,0 +1,30 @@
+name: Lint and Test
+
+on:
+  push:
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.14
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Lint with Black
+        run: poetry run black --check src tests
+
+      - name: Lint with Ruff
+        run: poetry run ruff check src tests
+
+      - name: Run Tests
+        run: poetry run pytest

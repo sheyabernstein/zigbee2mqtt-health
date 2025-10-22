@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+.env
+.poetry/
+dist/
+build/
+*.egg-info/
+.coverage
+
+# IDEs
+.vscode/
+.idea/
+
+# Docker
+*.log
+*.pid
