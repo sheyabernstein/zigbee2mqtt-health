@@ -33,4 +33,4 @@ RUN mkdir -p /tmp /app \
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
   CMD python -m zigbee2mqtt_health.liveness || exit 1
 
-ENTRYPOINT [python, -m, zigbee2mqtt_health.main]
+ENTRYPOINT ["python", "-m", "zigbee2mqtt_health.main"]
