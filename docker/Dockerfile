@@ -10,6 +10,12 @@ WORKDIR /app
 
 FROM base AS builder
 
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    python3-dev \
+    libffi-dev \
+    libssl-dev
+
 RUN pip install --no-cache-dir --upgrade pip poetry
 
 COPY pyproject.toml poetry.lock* /app/
