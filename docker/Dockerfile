@@ -1,8 +1,8 @@
-FROM python:3.14-alpine AS base
+FROM python:3.14-slim AS base
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/app/src \
+    PYTHONPATH=/app \
     PATH="/app/.venv/bin:$PATH"
 
 WORKDIR /app
@@ -17,13 +17,12 @@ COPY pyproject.toml poetry.lock* /app/
 RUN poetry config virtualenvs.in-project true \
     && poetry install --without dev --no-root
 
-COPY src /app/src
-
-RUN poetry install --without dev
+COPY zigbee2mqtt_health /app/zigbee2mqtt_health/
 
 
 FROM base AS runtime
 
+COPY docker/*.sh /
 COPY --from=builder /app /app
 
 RUN mkdir -p /tmp /app \
@@ -31,6 +30,6 @@ RUN mkdir -p /tmp /app \
     && chmod -R a+rwX /tmp
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-  CMD python -m zigbee2mqtt_health.liveness || exit 1
+  CMD /healthcheck.sh || exit 1
 
-ENTRYPOINT ["python", "-m", "zigbee2mqtt_health.main"]
+ENTRYPOINT ["/entrypoint.sh"]

@@ -1,7 +1,6 @@
 import json
 import logging
 import signal
-import socket
 import sys
 import threading
 import time
@@ -22,10 +21,11 @@ LAST_SEEN = {}
 
 
 def on_connect(client, userdata, flags, rc, properties):
-    logger.debug(f"Connected with result code {rc}")
+    logger.debug(f"Connected with result code: {rc}")
     topic_filter = f"{config.DEVICE_TOPIC_PREFIX}#"
-    logger.info(f"Subscribing to {topic_filter}")
+    logger.debug(f"Subscribing to {topic_filter}")
     client.subscribe(topic_filter)
+    logger.info(f"Subscribed to {topic_filter}")
 
     config.HEALTH_FILE_PATH.touch()
     threading.Thread(target=check_health, args=(client,), daemon=True).start()
@@ -33,15 +33,17 @@ def on_connect(client, userdata, flags, rc, properties):
 
 def on_disconnect(mqttc, obj, flags, rc, properties):
     config.HEALTH_FILE_PATH.unlink(missing_ok=True)
-    logger.warning(f"Disconnected with result code {rc}")
-    exit(1)
+    logger.warning(f"Disconnected with result code: {rc}")
+    sys.exit(1)
 
 
 def on_message(client, userdata, msg):
     topic = msg.topic
 
-    if excluded_topic := next((exclude for exclude in config.EXCLUDED_TOPICS if topic.startswith(exclude)), None):
-        logger.debug(f"Discarding message with excluded topic {excluded_topic}")
+    if excluded_pattern := config.is_topic_excluded(topic):
+        exclusion = excluded_pattern if excluded_pattern != topic else None
+        suffix = f" ({exclusion})" if exclusion else ""
+        logger.debug(f"Discarding message with excluded topic {topic}{suffix}")
         return
 
     now = now_utc()
@@ -50,15 +52,20 @@ def on_message(client, userdata, msg):
 
 
 def handle_exit(*args):
-    logger.warning("Exiting")
     config.HEALTH_FILE_PATH.unlink(missing_ok=True)
-    sys.exit(1)
+
+    if args:
+        sig_num = args[0]
+        sig_name = signal.Signals(sig_num).name
+        logger.info(f"Exiting due to signal {sig_name} ({sig_num})")
+        sys.exit(0)
+    else:
+        logger.warning("Exiting (manual or unknown cause)")
+        sys.exit(1)
 
 
 def check_health(client):
     while True:
-        status = None
-
         if not LAST_SEEN:
             logger.debug("No device messages seen yet")
             time.sleep(config.CHECK_INTERVAL)
@@ -90,14 +97,11 @@ def check_health(client):
 
 
 def main():
-    if not all([config.MQTT_BROKER, config.MQTT_PORT, config.MQTT_USERNAME, config.MQTT_PASSWORD]):
-        raise Exception("Invalid config")
+    logger.debug(f"Starting with check interval {config.CHECK_INTERVAL}")
 
-    logger.debug(f"Start with check interval {config.CHECK_INTERVAL}")
-
-    client_id = socket.gethostname()
-    logger.debug(f"Connecting to broker as {client_id}")
-    mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=client_id)
+    client_id = config.MQTT_CLIENT_ID
+    logger.debug(f"Connecting to mqtt://{config.MQTT_BROKER}:{config.MQTT_PORT} as {client_id}")
+    mqttc = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION2, client_id=client_id)
 
     mqttc.on_connect = on_connect
     mqttc.on_disconnect = on_disconnect
