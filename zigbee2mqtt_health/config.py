@@ -37,6 +37,9 @@ class Config(BaseSettings):
     def model_post_init(self, __context):
         self.EXCLUDED_TOPICS.add(self.HEALTH_TOPIC)
 
+        if isinstance(self.LOG_LEVEL, str):
+            self.LOG_LEVEL = self.LOG_LEVEL.upper()
+
         if not all([self.MQTT_BROKER, self.MQTT_PORT, self.MQTT_USERNAME, self.MQTT_PASSWORD]):
             raise ValueError("MQTT_BROKER and MQTT_PORT must be set")
 
