@@ -4,7 +4,9 @@ import signal
 import sys
 import threading
 import time
+from datetime import datetime
 
+import backoff
 import paho.mqtt.client as mqtt
 
 from zigbee2mqtt_health.config import config
@@ -18,6 +20,7 @@ logging.basicConfig(
 )
 
 LAST_SEEN = {}
+LAST_SEEN_LOCK = threading.Lock()
 
 
 def on_connect(client, userdata, flags, rc, properties):
@@ -31,10 +34,31 @@ def on_connect(client, userdata, flags, rc, properties):
     threading.Thread(target=check_health, args=(client,), daemon=True).start()
 
 
-def on_disconnect(mqttc, obj, flags, rc, properties):
+@backoff.on_exception(
+    backoff.expo,
+    Exception,
+    max_time=5 * 60,
+    jitter=backoff.full_jitter,
+    logger=logger,
+)
+def try_reconnect(mqttc: mqtt.Client):
+    mqttc.reconnect()
+    logger.info("Reconnected successfully")
+
+
+def on_disconnect(mqttc: mqtt.Client, obj, flags, rc, properties):
     config.HEALTH_FILE_PATH.unlink(missing_ok=True)
-    logger.warning(f"Disconnected with result code: {rc}")
-    sys.exit(1)
+    logger.warning(f"Disconnected from MQTT (rc={rc})")
+
+    if rc == 0:
+        return
+
+    try:
+        logger.info("Attempting reconnect with backoff...")
+        try_reconnect(mqttc)
+    except Exception as e:
+        logger.error(f"Could not reconnect after retries: {e}")
+        sys.exit(1)
 
 
 def on_message(client, userdata, msg):
@@ -48,7 +72,9 @@ def on_message(client, userdata, msg):
 
     now = now_utc()
     logger.debug(f"Saw {topic}")
-    LAST_SEEN[topic] = now
+
+    with LAST_SEEN_LOCK:
+        LAST_SEEN[topic] = now
 
 
 def handle_exit(*args):
@@ -64,12 +90,22 @@ def handle_exit(*args):
         sys.exit(1)
 
 
+def purge_stale_topics(now: datetime):
+    cutoff = now.timestamp() - config.STALE_TOPIC_AGE_SECONDS
+    with LAST_SEEN_LOCK:
+        stale = [t for t, ts in LAST_SEEN.items() if ts.timestamp() < cutoff]
+        for topic in stale:
+            logger.debug(f"Purging stale topic {topic} last seen at {LAST_SEEN[topic]}")
+            del LAST_SEEN[topic]
+
+
 def check_health(client):
     while True:
-        if not LAST_SEEN:
-            logger.debug("No device messages seen yet")
-            time.sleep(config.CHECK_INTERVAL)
-            continue
+        with LAST_SEEN_LOCK:
+            if not LAST_SEEN:
+                logger.debug("No device messages seen yet")
+                time.sleep(config.CHECK_INTERVAL)
+                continue
 
         now = now_utc()
         most_recent_topic, most_recent_time = max(LAST_SEEN.items(), key=lambda x: x[1])
@@ -86,13 +122,7 @@ def check_health(client):
         logger.debug(f"Publishing {config.HEALTH_TOPIC}: {payload}")
         client.publish(f"{config.HEALTH_TOPIC}", json.dumps(payload), retain=True)
 
-        cutoff = now.timestamp() - config.STALE_TOPIC_AGE_SECONDS
-        last_seen_copy = dict(LAST_SEEN)
-        for topic, ts in last_seen_copy.items():
-            if ts.timestamp() < cutoff:
-                logger.debug(f"Purging stale topic {topic} last seen at {ts}")
-                del LAST_SEEN[topic]
-
+        purge_stale_topics(now=now)
         time.sleep(config.CHECK_INTERVAL)
 
 
