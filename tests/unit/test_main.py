@@ -17,10 +17,10 @@ def test_on_connect(client):
 
 @patch("zigbee2mqtt_health.main.sys.exit")
 def test_on_disconnect(mock_exit):
-    config.HEALTH_FILE_PATH.touch()
+    config.HEARTBEAT_PATH.touch()
     on_disconnect(mqttc=None, obj=None, flags=None, rc=1, properties=None)
 
-    assert not config.HEALTH_FILE_PATH.exists()
+    assert not config.HEARTBEAT_PATH.exists()
     mock_exit.assert_called_once_with(1)
 
 
@@ -38,7 +38,7 @@ def test_on_disconnect(mock_exit):
     ],
 )
 def test_handle_exit(args, expected_exit_code, expected_log_method, caplog):
-    config.HEALTH_FILE_PATH.touch()
+    config.HEARTBEAT_PATH.touch()
 
     with (
         patch.object(Path, "unlink") as mock_unlink,
@@ -54,11 +54,11 @@ def test_handle_exit(args, expected_exit_code, expected_log_method, caplog):
 
 def test_write_heartbeat():
     mock_now = MagicMock()
-    config.HEALTH_FILE_PATH.touch()
+    config.HEARTBEAT_PATH.touch()
 
     write_heartbeat(now=mock_now)
 
-    with open(config.HEALTH_FILE_PATH) as fp:
+    with open(config.HEARTBEAT_PATH) as fp:
         data = fp.read()
 
     assert data == "1"

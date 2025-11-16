@@ -2,4 +2,4 @@
 
 set -e
 
-test $(find "${HEALTH_FILE_PATH:-/tmp/heartbeat}" -mmin -1) || exit 1
+test $(find "${HEARTBEAT_PATH:-/tmp/heartbeat}" -mmin -1) || exit 1

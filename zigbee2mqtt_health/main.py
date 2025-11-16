@@ -30,7 +30,7 @@ def on_connect(client, userdata, flags, rc, properties):
     client.subscribe(topic_filter)
     logger.info(f"Subscribed to {topic_filter}")
 
-    config.HEALTH_FILE_PATH.touch()
+    config.HEARTBEAT_PATH.touch()
     threading.Thread(target=check_health, args=(client,), daemon=True).start()
 
 
@@ -47,7 +47,7 @@ def try_reconnect(mqttc: mqtt.Client):
 
 
 def on_disconnect(mqttc: mqtt.Client, obj, flags, rc, properties):
-    config.HEALTH_FILE_PATH.unlink(missing_ok=True)
+    config.HEARTBEAT_PATH.unlink(missing_ok=True)
     logger.warning(f"Disconnected from MQTT (rc={rc})")
 
     if rc == 0:
@@ -80,12 +80,12 @@ def on_message(client, userdata, msg):
 def write_heartbeat(now: datetime = None) -> None:
     now = now or now_utc()
 
-    with open(config.HEALTH_FILE_PATH, "w") as fp:
+    with open(config.HEARTBEAT_PATH, "w") as fp:
         fp.write(str(int(now.timestamp())))
 
 
 def handle_exit(*args):
-    config.HEALTH_FILE_PATH.unlink(missing_ok=True)
+    config.HEARTBEAT_PATH.unlink(missing_ok=True)
 
     if args:
         sig_num = args[0]
