@@ -27,7 +27,7 @@ class Config(BaseSettings):
         description="Comma-separated MQTT topics to ignore",
     )
 
-    HEALTH_FILE_PATH: Path = Field(default=Path("/tmp/liveness"), description="Liveness file path")
+    HEALTH_FILE_PATH: Path = Field(default=Path("/tmp/heartbeat"), description="Heartbeat file path")
     STALE_TOPIC_AGE_SECONDS: int = Field(default=60 * 60 * 24, description="Max topic age to be considered")
 
     class ConfigDict:

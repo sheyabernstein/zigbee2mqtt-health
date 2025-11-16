@@ -62,6 +62,7 @@ def on_disconnect(mqttc: mqtt.Client, obj, flags, rc, properties):
 
 
 def on_message(client, userdata, msg):
+    now = now_utc()
     topic = msg.topic
 
     if excluded_pattern := config.is_topic_excluded(topic):
@@ -70,11 +71,17 @@ def on_message(client, userdata, msg):
         logger.debug(f"Discarding message with excluded topic {topic}{suffix}")
         return
 
-    now = now_utc()
     logger.debug(f"Saw {topic}")
 
     with LAST_SEEN_LOCK:
         LAST_SEEN[topic] = now
+
+
+def write_heartbeat(now: datetime = None) -> None:
+    now = now or now_utc()
+
+    with open(config.HEALTH_FILE_PATH, "w") as fp:
+        fp.write(str(int(now.timestamp())))
 
 
 def handle_exit(*args):
@@ -101,6 +108,9 @@ def purge_stale_topics(now: datetime):
 
 def check_health(client):
     while True:
+        now = now_utc()
+        write_heartbeat(now=now)
+
         with LAST_SEEN_LOCK:
             if not LAST_SEEN:
                 logger.debug("No device messages seen yet")
