@@ -10,19 +10,19 @@ Monitor Zigbee2MQTT devices and publish health status to MQTT.
 
 ## Environment Variables
 
-| Variable              | Default                                       | Description                                                                              |
-|-----------------------|-----------------------------------------------|------------------------------------------------------------------------------------------|
-| `MQTT_BROKER`         | `localhost`                                   | MQTT broker hostname                                                                     |
-| `MQTT_PORT`           | `1883`                                        | MQTT broker port                                                                         |
-| `MQTT_USERNAME`       |                                               | MQTT username                                                                            |
-| `MQTT_PASSWORD`       |                                               | MQTT password                                                                            |
-| `MQTT_CLIENT_ID`      | `socket.gethostname()`                        | Client ID used when connecting to the broker; defaults to the host’s hostname if not set |
-| `CHECK_INTERVAL`      | `30`                                          | Seconds between health checks                                                            |
-| `TIMEOUT_SECONDS`     | `60`                                          | Max allowed seconds since last message to be `online`                                    |
-| `HEALTH_TOPIC`        | `zigbee2mqtt/healthz`                         | MQTT topic for health status                                                             |
-| `DEVICE_TOPIC_PREFIX` | `zigbee2mqtt/`                                | Device topics prefix                                                                     |
-| `EXCLUDED_TOPICS`     | `zigbee2mqtt/bridge,zigbee2mqtt/bridge/state` | Comma separated topics to ignore, supports MQTT wildcards                                |
-| `LOG_LEVEL`           | `info`                                        | Python log level                                                                         |
+| Variable              | Default                 | Description                                                                              |
+|-----------------------|-------------------------|------------------------------------------------------------------------------------------|
+| `MQTT_BROKER`         | `localhost`             | MQTT broker hostname                                                                     |
+| `MQTT_PORT`           | `1883`                  | MQTT broker port                                                                         |
+| `MQTT_USERNAME`       |                         | MQTT username                                                                            |
+| `MQTT_PASSWORD`       |                         | MQTT password                                                                            |
+| `MQTT_CLIENT_ID`      | `socket.gethostname()`  | Client ID used when connecting to the broker; defaults to the host’s hostname if not set |
+| `CHECK_INTERVAL`      | `30`                    | Seconds between health checks                                                            |
+| `TIMEOUT_SECONDS`     | `60`                    | Max allowed seconds since last message to be `online`                                    |
+| `HEALTH_TOPIC`        | `zigbee2mqtt/healthz`   | MQTT topic for health status                                                             |
+| `DEVICE_TOPIC_PREFIX` | `zigbee2mqtt/`          | Device topics prefix                                                                     |
+| `EXCLUDED_TOPICS`     | `zigbee2mqtt/bridge/#,zigbee2mqtt/default/#` | Comma separated topics to ignore, supports MQTT wildcards                                |
+| `LOG_LEVEL`           | `info`                  | Python log level                                                                         |
 
 ### Docker
 

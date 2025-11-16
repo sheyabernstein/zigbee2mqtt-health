@@ -30,7 +30,7 @@ def on_connect(client, userdata, flags, rc, properties):
     client.subscribe(topic_filter)
     logger.info(f"Subscribed to {topic_filter}")
 
-    config.HEALTH_FILE_PATH.touch()
+    config.HEARTBEAT_PATH.touch()
     threading.Thread(target=check_health, args=(client,), daemon=True).start()
 
 
@@ -47,7 +47,7 @@ def try_reconnect(mqttc: mqtt.Client):
 
 
 def on_disconnect(mqttc: mqtt.Client, obj, flags, rc, properties):
-    config.HEALTH_FILE_PATH.unlink(missing_ok=True)
+    config.HEARTBEAT_PATH.unlink(missing_ok=True)
     logger.warning(f"Disconnected from MQTT (rc={rc})")
 
     if rc == 0:
@@ -62,6 +62,7 @@ def on_disconnect(mqttc: mqtt.Client, obj, flags, rc, properties):
 
 
 def on_message(client, userdata, msg):
+    now = now_utc()
     topic = msg.topic
 
     if excluded_pattern := config.is_topic_excluded(topic):
@@ -70,15 +71,21 @@ def on_message(client, userdata, msg):
         logger.debug(f"Discarding message with excluded topic {topic}{suffix}")
         return
 
-    now = now_utc()
     logger.debug(f"Saw {topic}")
 
     with LAST_SEEN_LOCK:
         LAST_SEEN[topic] = now
 
 
+def write_heartbeat(now: datetime = None) -> None:
+    now = now or now_utc()
+
+    with open(config.HEARTBEAT_PATH, "w") as fp:
+        fp.write(str(int(now.timestamp())))
+
+
 def handle_exit(*args):
-    config.HEALTH_FILE_PATH.unlink(missing_ok=True)
+    config.HEARTBEAT_PATH.unlink(missing_ok=True)
 
     if args:
         sig_num = args[0]
@@ -101,6 +108,9 @@ def purge_stale_topics(now: datetime):
 
 def check_health(client):
     while True:
+        now = now_utc()
+        write_heartbeat(now=now)
+
         with LAST_SEEN_LOCK:
             if not LAST_SEEN:
                 logger.debug("No device messages seen yet")

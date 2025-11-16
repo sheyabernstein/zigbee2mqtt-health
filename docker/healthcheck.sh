@@ -2,4 +2,4 @@
 
 set -e
 
-python -m zigbee2mqtt_health.liveness
+test $(find "${HEARTBEAT_PATH:-/tmp/heartbeat}" -mmin -1) || exit 1

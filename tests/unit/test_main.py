@@ -1,12 +1,12 @@
 import signal
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from zigbee2mqtt_health.config import config
-from zigbee2mqtt_health.main import LAST_SEEN, handle_exit, logger, on_connect, on_disconnect
+from zigbee2mqtt_health.main import LAST_SEEN, handle_exit, logger, on_connect, on_disconnect, write_heartbeat
 
 
 def test_on_connect(client):
@@ -17,10 +17,10 @@ def test_on_connect(client):
 
 @patch("zigbee2mqtt_health.main.sys.exit")
 def test_on_disconnect(mock_exit):
-    config.HEALTH_FILE_PATH.touch()
+    config.HEARTBEAT_PATH.touch()
     on_disconnect(mqttc=None, obj=None, flags=None, rc=1, properties=None)
 
-    assert not config.HEALTH_FILE_PATH.exists()
+    assert not config.HEARTBEAT_PATH.exists()
     mock_exit.assert_called_once_with(1)
 
 
@@ -38,7 +38,7 @@ def test_on_disconnect(mock_exit):
     ],
 )
 def test_handle_exit(args, expected_exit_code, expected_log_method, caplog):
-    config.HEALTH_FILE_PATH.touch()
+    config.HEARTBEAT_PATH.touch()
 
     with (
         patch.object(Path, "unlink") as mock_unlink,
@@ -50,6 +50,19 @@ def test_handle_exit(args, expected_exit_code, expected_log_method, caplog):
         mock_unlink.assert_called_once_with(missing_ok=True)
         mock_exit.assert_called_once_with(expected_exit_code)
         assert mock_logger.called
+
+
+def test_write_heartbeat():
+    mock_now = MagicMock()
+    config.HEARTBEAT_PATH.touch()
+
+    write_heartbeat(now=mock_now)
+
+    with open(config.HEARTBEAT_PATH) as fp:
+        data = fp.read()
+
+    assert data == "1"
+    mock_now.timestamp.assert_called_once()
 
 
 def test_check_health__online(monkeypatch):
