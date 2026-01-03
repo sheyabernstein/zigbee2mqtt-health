@@ -229,14 +229,14 @@ files = [
 
 [[package]]
 name = "filelock"
-version = "3.20.0"
+version = "3.20.2"
 description = "A platform independent file lock."
 optional = false
 python-versions = ">=3.10"
-groups = ["dev"]
+groups = ["main", "dev"]
 files = [
-    {file = "filelock-3.20.0-py3-none-any.whl", hash = "sha256:339b4732ffda5cd79b13f4e2711a31b0365ce445d95d243bb996273d072546a2"},
-    {file = "filelock-3.20.0.tar.gz", hash = "sha256:711e943b4ec6be42e1d4e6690b48dc175c822967466bb31c0c293f34334c13f4"},
+    {file = "filelock-3.20.2-py3-none-any.whl", hash = "sha256:fbba7237d6ea277175a32c54bb71ef814a8546d8601269e1bfc388de333974e8"},
+    {file = "filelock-3.20.2.tar.gz", hash = "sha256:a2241ff4ddde2a7cebddf78e39832509cb045d18ec1a09d7248d6bfc6bfbbe64"},
 ]
 
 [[package]]
@@ -843,4 +843,4 @@ test = ["covdefaults (>=2.3)", "coverage (>=7.2.7)", "coverage-enable-subprocess
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<4.0"
-content-hash = "1179e4824d0ba152d8f35f667817d3ffe941e19024181a184d9121b76d23a69a"
+content-hash = "5404ed9229e0fb680d84399b4b9fea239cb57798cd4db1b0a80286b8c70367a5"
