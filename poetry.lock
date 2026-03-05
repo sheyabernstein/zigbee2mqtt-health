@@ -240,7 +240,7 @@ version = "3.25.0"
 description = "A platform independent file lock."
 optional = false
 python-versions = ">=3.10"
-groups = ["main", "dev"]
+groups = ["dev"]
 files = [
     {file = "filelock-3.25.0-py3-none-any.whl", hash = "sha256:5ccf8069f7948f494968fc0713c10e5c182a9c9d9eef3a636307a20c2490f047"},
     {file = "filelock-3.25.0.tar.gz", hash = "sha256:8f00faf3abf9dc730a1ffe9c354ae5c04e079ab7d3a683b7c32da5dd05f26af3"},
@@ -705,4 +705,4 @@ python-discovery = ">=1"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<4.0"
-content-hash = "3976a39c7e5547eba50f01a2bcf6290906cb7b399ba6aaf1460e008174dc4d44"
+content-hash = "ae638f9abdfc31dd838954bf9fe056b56d02844cb7bed7571120f5d94816ec54"
